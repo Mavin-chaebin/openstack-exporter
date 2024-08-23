@@ -6,6 +6,7 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/go-kit/log"
 	"github.com/gophercloud/gophercloud"
@@ -121,7 +122,7 @@ func NewNovaExporter(config *ExporterConfig, logger log.Logger) (*NovaExporter, 
 		exporter.Client.Microversion = envMicroversion
 	} else {
 
-		microversion, err := apiversions.Get(config.Client, "v2.1").Extract()
+		microversion, err := apiversions.Get(config.Client, "v2.71").Extract()
 		if err == nil {
 			exporter.Client.Microversion = microversion.Version
 		}
@@ -333,12 +334,12 @@ func ListAllServers(exporter *BaseOpenStackExporter, ch chan<- prometheus.Metric
 				ch <- prometheus.MustNewConstMetric(exporter.Metrics["server_status"].Metric,
 					prometheus.GaugeValue, float64(mapServerStatus(server.Status)), server.ID, server.Status, server.Name, server.TenantID,
 					server.UserID, server.AccessIPv4, server.AccessIPv6, server.HostID, server.HypervisorHostname, server.ID,
-					server.AvailabilityZone, fmt.Sprintf("%v", server.Flavor["id"]), server.InstanceName)
+					server.AvailabilityZone, fmt.Sprintf("%v", server.Flavor["id"]), server.InstanceName, strings.Join(*server.Tags, ","))
 			} else {
 				ch <- prometheus.MustNewConstMetric(exporter.Metrics["server_status"].Metric,
 					prometheus.GaugeValue, float64(mapServerStatus(server.Status)), server.ID, server.Status, server.Name, server.TenantID,
 					server.UserID, server.AccessIPv4, server.AccessIPv6, server.HostID, server.HypervisorHostname, server.ID,
-					server.AvailabilityZone, searchFlavorIDbyName(server.Flavor["original_name"], allFlavors), server.InstanceName)
+					server.AvailabilityZone, searchFlavorIDbyName(server.Flavor["original_name"], allFlavors), server.InstanceName, strings.Join(*server.Tags, ","))
 			}
 		}
 	}
